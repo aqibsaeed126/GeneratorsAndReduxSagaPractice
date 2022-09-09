@@ -1,0 +1,139 @@
+---------- Generators --------
+
+// JS Info
+- Regular function return once and only single value of object
+- generator return/yield multiple times. Help generate stream of data.
+- can write infinite loop with generator.
+- basic syntax is 
+function* generateSequence() {
+  yield 1;
+  yield 2;
+  // return 3; // not part of for of loop
+  yield 3;
+}
+- When generator is called , it returns you generator object.
+like let generator = generateSequence();
+- you can call next() on generated object. It will execute code till next yield and return yield value
+- gnerator.next() also returns you object with properties {value: 1, done: false};
+- When you are on last yield. it returns you last value and done: true;
+- after that if you call next. it gives you undefined and done: true onwards.
+- Possible syntaxes are function* genFunction OR function *genFunction. Estaric place is optional. Both are fine.
+- GENERATORS are ITERABLES. means you can run for of loop on generator object. as it has next() method. it will run and execute till last yield.
+- for(let value of generator) {console.log(value)}
+- for of loop ignores return value. so must yield the value to be part of for of loop.
+- after for of loop. you have to reset gene object to use later on. it will be on last yeild.
+- Using spread operator with generator object in array. return spread values. like
+[0, ...generateSequence()]
+- To make any object iterable. we need to implement Symbol.Iterator for it. We can implement symbol.iterator as generator function.
+like 
+let range = {
+  from: 1,
+  to: 5,
+
+  *[Symbol.iterator]() { // a shorthand for [Symbol.iterator]: function*()
+    for(let value = this.from; value <= this.to; value++) {
+      yield value;
+    }
+  }
+};
+console.log([...range]) // 1,2,3,4,5
+
+- Generators within generators.
+- We want to generate a password code from 0-9A-Z
+- yield* is way to yield from another generator. xecute another generator. 
+- see example from index.js file.
+
+- YIELD is 2 way street. pass data into next() function. Its like passing value to generators on each yield.
+- next() ->  execute code till next yield. then next(2) , pass 2 to last yield and execute till next yield. 
+- you can save result and use later on. see example code in index.js file.
+- usually yield statement returns undefined. when we pass something with next next(3) , yield return 3 and we can save that.
+
+- Generator can throw errors as well instead of next. 
+- generator.throw(new Error('error message')) and inside generator use try catch to handle it. simple
+
+- generator.return() VS return statement in generator function
+- both are similar. generator.return makes done to true even you have more yield items
+- return statement in generator also make done to true if you have more yield items.
+
+- If you execute geenrator twice and save 2 different references. like
+   gen1 = generatorSequence()
+   gen2 = generatorSequence()
+
+  Both are different reference and yield value track. just like functions.
+
+- Use case can be generate unique ids in infinite loop way.
+- You can pass values to generator functions 1st time call as well.
+- You can create generator iteratbel from array lets say.
+- passing value to 1st .next() do nothing :) because its return to yield and we dont reach to 1st yield yet.
+
+
+
+---------- Sagas --------
+
+// Basics
+- In microservices world , sagas is pattern to help in implementing transcation that span multiple services.
+- Its way to handle side effects within an app. easier to manage, east to test, better at handling failures.
+- If we yield an async function in geenrator. Generator function will wait to return and then yield it.
+- like const result = yield asyncFunc1() // it will wait for asyncFunct1 to return and then yield.
+- Its a redux middlware , then it can dispatch redux actions as well.
+- Redux-Saga library calling, pausing, yielding for you. You dont need to do that :))
+
+// Setup Project
+- Create react app.
+- install dependencies
+- setup store and apply middlware as per toolkit syntax. getDefault.concat.
+
+// Root Saga, Watchers and Workers
+- Root saga is saga that combines and runs all sagas. you can run them concurrently to make it able to watch for actions.
+- Each single slice saga. is combination of watchers and workers/handlers.
+- watchers are generator function watching for some action to dispatch.
+- when that action happen, it take it using take, takeEvery or takeLatest and pass it to worker/handler Saga. 
+- Worker saga do , API calls handle side effects and dispatch other actions as well. 
+Example is  
+// Watcher - Call every time GET_ALL_PRODUCT action is dispatched
+function* watchGetProducts() {
+  yield takeEvery(actions.GET_ALL_PRODUCTS, getAllProducts)
+} 
+// Worker - do API call and dispatch another sync action to update state.
+function *getAllProducts() {
+  const priducts = yield call(api.getproducts)
+  yield put(action.receiveProducts(products))
+}
+
+// Saga Helpers
+- takeEvery - take every matching action and runs instructed saga, can run concurrent
+- takeLatest - take every matching and run instructed saga but cancel previous saga task if still running.
+
+// Saga Effect Creators
+Used in our app
+- all - run all sagas inside array in parallel and wait for them all to complete. like promise.all
+- put - dispatches an action
+- call - runs a function , if it return promise pause saga until promise reolves and return result.
+- fork - Dont understand - Search ??????????????????????
+- select - select data within state.
+- race - same like promise.race , take multiple effects/promise. return which ever runs and resolved faster.
+- delay - like setTimeout.
+Not used in our app
+- spawn
+- join
+- cancel
+
+
+// Redux Saga Advantages
+- Synchronous looking code
+- Efficient and easier to understand
+- easy to write, mock and test
+- Sagas are composable. yield* syntax
+- Action creators are pure
+- isolate side effects to separate area of code.
+- many helper functions and effect creators. solid documentation
+
+// React Redux Saga Practice Project
+- techsith Ageup and Age down Actions.
+- to setup saga. use createSagaMiddleware() and pass it in applyMiddleware() method. that pass in createStore.
+- You have to provide saga in applyMiddleware + Run the root saga as well. 
+- sagaMiddleware.run(watchAgeUp) // watchAgeUp saga is watcher and geenrator function. that contains all sub slice sagas.
+- delay(4000) and then put({type: 'AGE_UP_ASYNC'})
+- Run app and see result. Yahoooo !!!
+
+
